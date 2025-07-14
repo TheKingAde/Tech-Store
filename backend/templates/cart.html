@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Shopping Cart - TECH STORE{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold">
+                <i class="fas fa-shopping-cart me-3"></i>Shopping Cart
+            </h1>
+            <p class="lead">Review your items before checkout</p>
+        </div>
+    </div>
+    
+    <!-- Cart Items -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div id="cart-items">
+                <!-- Cart items will be loaded here by JavaScript -->
+                <div class="text-center py-5" id="empty-cart">
+                    <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                    <h3>Your cart is empty</h3>
+                    <p class="lead text-muted">Add some products to get started</p>
+                    <a href="{{ url_for('products') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-arrow-left me-2"></i>Continue Shopping
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Cart Summary -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm" id="cart-summary" style="display: none;">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-calculator me-2"></i>Order Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">$0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Shipping:</span>
+                        <span id="shipping">Free</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Tax:</span>
+                        <span id="tax">$0.00</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between fw-bold">
+                        <span>Total:</span>
+                        <span id="total">$0.00</span>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('checkout') }}" class="btn btn-success btn-lg w-100" id="checkout-btn">
+                        <i class="fas fa-credit-card me-2"></i>Proceed to Checkout
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Continue Shopping -->
+            <div class="mt-3">
+                <a href="{{ url_for('products') }}" class="btn btn-outline-primary w-100">
+                    <i class="fas fa-arrow-left me-2"></i>Continue Shopping
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cart Item Template -->
+<template id="cart-item-template">
+    <div class="card mb-3 cart-item" data-product-id="">
+        <div class="row g-0">
+            <div class="col-md-3">
+                <img src="" class="img-fluid rounded-start cart-item-image" alt="">
+            </div>
+            <div class="col-md-9">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <h5 class="card-title cart-item-name"></h5>
+                        <button class="btn btn-sm btn-outline-danger remove-item" data-product-id="">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <p class="card-text cart-item-price text-primary fw-bold"></p>
+                    <div class="d-flex align-items-center">
+                        <label class="me-2">Quantity:</label>
+                        <div class="input-group" style="max-width: 150px;">
+                            <button class="btn btn-outline-secondary decrease-qty" type="button">-</button>
+                            <input type="number" class="form-control text-center quantity-input" value="1" min="1" max="10">
+                            <button class="btn btn-outline-secondary increase-qty" type="button">+</button>
+                        </div>
+                        <span class="ms-3 fw-bold item-total"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadCart();
+    
+    function loadCart() {
+        const cart = getCart();
+        const cartItemsContainer = document.getElementById('cart-items');
+        const emptyCart = document.getElementById('empty-cart');
+        const cartSummary = document.getElementById('cart-summary');
+        
+        if (cart.length === 0) {
+            emptyCart.style.display = 'block';
+            cartSummary.style.display = 'none';
+            cartItemsContainer.innerHTML = '';
+            cartItemsContainer.appendChild(emptyCart);
+            return;
+        }
+        
+        emptyCart.style.display = 'none';
+        cartSummary.style.display = 'block';
+        cartItemsContainer.innerHTML = '';
+        
+        cart.forEach(item => {
+            const cartItemElement = createCartItemElement(item);
+            cartItemsContainer.appendChild(cartItemElement);
+        });
+        
+        updateCartSummary();
+    }
+    
+    function createCartItemElement(item) {
+        const template = document.getElementById('cart-item-template');
+        const cartItem = template.content.cloneNode(true);
+        
+        const cartItemDiv = cartItem.querySelector('.cart-item');
+        cartItemDiv.setAttribute('data-product-id', item.id);
+        
+        const image = cartItem.querySelector('.cart-item-image');
+        image.src = item.image || 'https://via.placeholder.com/150x100?text=' + encodeURIComponent(item.name);
+        image.alt = item.name;
+        
+        cartItem.querySelector('.cart-item-name').textContent = item.name;
+        cartItem.querySelector('.cart-item-price').textContent = '$' + item.price.toFixed(2);
+        
+        const quantityInput = cartItem.querySelector('.quantity-input');
+        quantityInput.value = item.quantity;
+        
+        // Remove button
+        const removeBtn = cartItem.querySelector('.remove-item');
+        removeBtn.setAttribute('data-product-id', item.id);
+        removeBtn.addEventListener('click', function() {
+            removeFromCart(item.id);
+            loadCart();
+            updateCartCount();
+        });
+        
+        // Quantity controls
+        const decreaseBtn = cartItem.querySelector('.decrease-qty');
+        const increaseBtn = cartItem.querySelector('.increase-qty');
+        
+        decreaseBtn.addEventListener('click', function() {
+            if (item.quantity > 1) {
+                updateCartItemQuantity(item.id, item.quantity - 1);
+                loadCart();
+                updateCartCount();
+            }
+        });
+        
+        increaseBtn.addEventListener('click', function() {
+            if (item.quantity < 10) {
+                updateCartItemQuantity(item.id, item.quantity + 1);
+                loadCart();
+                updateCartCount();
+            }
+        });
+        
+        quantityInput.addEventListener('change', function() {
+            const newQuantity = parseInt(this.value);
+            if (newQuantity >= 1 && newQuantity <= 10) {
+                updateCartItemQuantity(item.id, newQuantity);
+                loadCart();
+                updateCartCount();
+            }
+        });
+        
+        // Update item total
+        const itemTotal = cartItem.querySelector('.item-total');
+        itemTotal.textContent = '$' + (item.price * item.quantity).toFixed(2);
+        
+        return cartItem;
+    }
+    
+    function updateCartSummary() {
+        const cart = getCart();
+        let subtotal = 0;
+        
+        cart.forEach(item => {
+            subtotal += item.price * item.quantity;
+        });
+        
+        const tax = subtotal * 0.08; // 8% tax
+        const total = subtotal + tax;
+        
+        document.getElementById('subtotal').textContent = '$' + subtotal.toFixed(2);
+        document.getElementById('tax').textContent = '$' + tax.toFixed(2);
+        document.getElementById('total').textContent = '$' + total.toFixed(2);
+    }
+    
+    function updateCartItemQuantity(productId, newQuantity) {
+        let cart = getCart();
+        const itemIndex = cart.findIndex(item => item.id == productId);
+        if (itemIndex !== -1) {
+            cart[itemIndex].quantity = newQuantity;
+            localStorage.setItem('cart', JSON.stringify(cart));
+        }
+    }
+});
+</script>
+{% endblock %}

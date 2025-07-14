@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout - TECH STORE{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold">
+                <i class="fas fa-credit-card me-3"></i>Checkout
+            </h1>
+            <p class="lead">Complete your order details</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Checkout Form -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-user me-2"></i>Billing Information</h5>
+                </div>
+                <div class="card-body">
+                    <form id="checkout-form">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="firstName" class="form-label">First Name *</label>
+                                <input type="text" class="form-control" id="firstName" name="firstName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="lastName" class="form-label">Last Name *</label>
+                                <input type="text" class="form-control" id="lastName" name="lastName" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address *</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" name="phone">
+                        </div>
+                        
+                        <h6 class="mt-4 mb-3">Shipping Address</h6>
+                        
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Street Address *</label>
+                            <input type="text" class="form-control" id="address" name="address" required>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="city" class="form-label">City *</label>
+                                <input type="text" class="form-control" id="city" name="city" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="state" class="form-label">State *</label>
+                                <select class="form-control" id="state" name="state" required>
+                                    <option value="">Select State</option>
+                                    <option value="CA">California</option>
+                                    <option value="NY">New York</option>
+                                    <option value="TX">Texas</option>
+                                    <option value="FL">Florida</option>
+                                    <!-- Add more states as needed -->
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="zip" class="form-label">ZIP Code *</label>
+                                <input type="text" class="form-control" id="zip" name="zip" required>
+                            </div>
+                        </div>
+                        
+                        <h6 class="mt-4 mb-3">Payment Information</h6>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            This is a demo checkout. No real payment will be processed.
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="cardNumber" class="form-label">Card Number *</label>
+                            <input type="text" class="form-control" id="cardNumber" name="cardNumber" 
+                                   placeholder="1234 5678 9012 3456" required>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="expiryDate" class="form-label">Expiry Date *</label>
+                                <input type="text" class="form-control" id="expiryDate" name="expiryDate" 
+                                       placeholder="MM/YY" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="cvv" class="form-label">CVV *</label>
+                                <input type="text" class="form-control" id="cvv" name="cvv" 
+                                       placeholder="123" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="terms" required>
+                            <label class="form-check-label" for="terms">
+                                I agree to the <a href="#">Terms and Conditions</a> *
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-lg" id="place-order-btn">
+                                <i class="fas fa-lock me-2"></i>Place Order Securely
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Order Summary -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Order Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div id="checkout-items">
+                        <!-- Items will be loaded here -->
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal:</span>
+                        <span id="checkout-subtotal">$0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Shipping:</span>
+                        <span id="checkout-shipping">Free</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Tax:</span>
+                        <span id="checkout-tax">$0.00</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between fw-bold h5">
+                        <span>Total:</span>
+                        <span id="checkout-total">$0.00</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-3">
+                <a href="{{ url_for('cart') }}" class="btn btn-outline-primary w-100">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Cart
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadCheckoutSummary();
+    
+    // Check if cart is empty
+    const cart = getCart();
+    if (cart.length === 0) {
+        window.location.href = '/cart';
+        return;
+    }
+    
+    // Handle form submission
+    document.getElementById('checkout-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const orderData = {
+            customer: {
+                firstName: formData.get('firstName'),
+                lastName: formData.get('lastName'),
+                email: formData.get('email'),
+                phone: formData.get('phone')
+            },
+            address: {
+                street: formData.get('address'),
+                city: formData.get('city'),
+                state: formData.get('state'),
+                zip: formData.get('zip')
+            },
+            items: cart,
+            total: calculateTotal()
+        };
+        
+        // Disable button and show loading
+        const submitBtn = document.getElementById('place-order-btn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        
+        // Submit order
+        fetch('/api/checkout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(orderData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Clear cart
+                localStorage.removeItem('cart');
+                updateCartCount();
+                
+                // Redirect to thank you page
+                window.location.href = '/thank-you?order_id=' + data.order_id;
+            } else {
+                throw new Error(data.error || 'Order failed');
+            }
+        })
+        .catch(error => {
+            alert('Error processing order: ' + error.message);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-lock me-2"></i>Place Order Securely';
+        });
+    });
+    
+    function loadCheckoutSummary() {
+        const cart = getCart();
+        const itemsContainer = document.getElementById('checkout-items');
+        
+        itemsContainer.innerHTML = '';
+        cart.forEach(item => {
+            const itemElement = document.createElement('div');
+            itemElement.className = 'd-flex justify-content-between align-items-center mb-2';
+            itemElement.innerHTML = `
+                <div>
+                    <strong>${item.name}</strong><br>
+                    <small class="text-muted">Qty: ${item.quantity}</small>
+                </div>
+                <div class="text-end">
+                    <span class="fw-bold">$${(item.price * item.quantity).toFixed(2)}</span>
+                </div>
+            `;
+            itemsContainer.appendChild(itemElement);
+        });
+        
+        updateCheckoutTotals();
+    }
+    
+    function updateCheckoutTotals() {
+        const cart = getCart();
+        let subtotal = 0;
+        
+        cart.forEach(item => {
+            subtotal += item.price * item.quantity;
+        });
+        
+        const tax = subtotal * 0.08;
+        const total = subtotal + tax;
+        
+        document.getElementById('checkout-subtotal').textContent = '$' + subtotal.toFixed(2);
+        document.getElementById('checkout-tax').textContent = '$' + tax.toFixed(2);
+        document.getElementById('checkout-total').textContent = '$' + total.toFixed(2);
+    }
+    
+    function calculateTotal() {
+        const cart = getCart();
+        let subtotal = 0;
+        cart.forEach(item => {
+            subtotal += item.price * item.quantity;
+        });
+        return subtotal * 1.08; // Including tax
+    }
+});
+</script>
+{% endblock %}

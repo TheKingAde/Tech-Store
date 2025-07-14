@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Order Confirmed - TECH STORE{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 text-center">
+            <!-- Success Icon -->
+            <div class="mb-4">
+                <i class="fas fa-check-circle fa-5x text-success"></i>
+            </div>
+            
+            <!-- Thank You Message -->
+            <h1 class="display-4 fw-bold mb-4">Thank You!</h1>
+            <p class="lead mb-4">Your order has been successfully placed and is being processed.</p>
+            
+            <!-- Order Details -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Order Confirmation</h5>
+                    <p class="card-text">
+                        <strong>Order ID:</strong> <span id="order-id">{{ request.args.get('order_id', 'N/A') }}</span><br>
+                        <strong>Date:</strong> <span id="order-date"></span>
+                    </p>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        You will receive a confirmation email shortly with your order details and tracking information.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Next Steps -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">What's Next?</h5>
+                    <div class="row text-start">
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex align-items-start">
+                                <i class="fas fa-envelope fa-2x text-primary me-3 mt-1"></i>
+                                <div>
+                                    <h6>Order Confirmation</h6>
+                                    <p class="small text-muted">You'll receive an email confirmation within 5 minutes.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex align-items-start">
+                                <i class="fas fa-box fa-2x text-primary me-3 mt-1"></i>
+                                <div>
+                                    <h6>Processing</h6>
+                                    <p class="small text-muted">Your order will be processed within 1-2 business days.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex align-items-start">
+                                <i class="fas fa-truck fa-2x text-primary me-3 mt-1"></i>
+                                <div>
+                                    <h6>Shipping</h6>
+                                    <p class="small text-muted">Free shipping! Your order will arrive in 3-5 business days.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="d-flex flex-column flex-md-row justify-content-center gap-3">
+                <a href="{{ url_for('products') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-shopping-bag me-2"></i>Continue Shopping
+                </a>
+                <a href="{{ url_for('home') }}" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-home me-2"></i>Back to Home
+                </a>
+            </div>
+            
+            <!-- Customer Support -->
+            <div class="mt-5 p-4 bg-light rounded">
+                <h5>Need Help?</h5>
+                <p class="mb-2">If you have any questions about your order, please contact our customer support:</p>
+                <p class="mb-0">
+                    <i class="fas fa-phone me-2"></i>1-800-TECH-STORE<br>
+                    <i class="fas fa-envelope me-2"></i>support@techstore.com
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set current date
+    const now = new Date();
+    const options = { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    };
+    document.getElementById('order-date').textContent = now.toLocaleDateString('en-US', options);
+});
+</script>
+{% endblock %}
