@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - TECH STORE{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('products') }}">Products</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('products', category=product.category) }}">{{ product.category }}</a></li>
+            <li class="breadcrumb-item active">{{ product.name }}</li>
+        </ol>
+    </nav>
+    
+    <!-- Product Details -->
+    <div class="row">
+        <!-- Product Image -->
+        <div class="col-lg-6 mb-4">
+            <div class="product-image-container">
+                {% if product.image_url %}
+                    <img src="{{ product.image_url }}" class="img-fluid rounded shadow-lg" alt="{{ product.name }}" id="main-product-image">
+                {% else %}
+                    <img src="https://via.placeholder.com/600x400?text={{ product.name | urlencode }}" class="img-fluid rounded shadow-lg" alt="{{ product.name }}" id="main-product-image">
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Product Info -->
+        <div class="col-lg-6">
+            <div class="product-info">
+                <div class="mb-3">
+                    <span class="badge bg-primary fs-6">{{ product.category }}</span>
+                </div>
+                
+                <h1 class="display-5 fw-bold mb-3">{{ product.name }}</h1>
+                
+                <div class="price-section mb-4">
+                    <span class="h2 text-primary fw-bold">${{ "%.2f"|format(product.price) }}</span>
+                </div>
+                
+                <div class="description-section mb-4">
+                    <h5>Description</h5>
+                    <p class="lead">{{ product.description }}</p>
+                </div>
+                
+                <!-- Product Specs (Mock data) -->
+                <div class="specs-section mb-4">
+                    <h5>Specifications</h5>
+                    <ul class="list-unstyled">
+                        {% if product.category == 'Laptops' %}
+                        <li><strong>Processor:</strong> High-performance processor</li>
+                        <li><strong>Memory:</strong> 16GB RAM</li>
+                        <li><strong>Storage:</strong> 512GB SSD</li>
+                        <li><strong>Display:</strong> High-resolution display</li>
+                        {% elif product.category == 'Monitors' %}
+                        <li><strong>Size:</strong> 27 inches</li>
+                        <li><strong>Resolution:</strong> 4K Ultra HD</li>
+                        <li><strong>Connectivity:</strong> USB-C, HDMI</li>
+                        <li><strong>Refresh Rate:</strong> 60Hz</li>
+                        {% else %}
+                        <li><strong>Compatibility:</strong> Universal</li>
+                        <li><strong>Connectivity:</strong> Wireless/USB</li>
+                        <li><strong>Battery Life:</strong> Long-lasting</li>
+                        {% endif %}
+                    </ul>
+                </div>
+                
+                <!-- Add to Cart Section -->
+                <div class="cart-section">
+                    <div class="row align-items-center">
+                        <div class="col-md-6 mb-3">
+                            <div class="quantity-selector">
+                                <label for="quantity" class="form-label">Quantity:</label>
+                                <div class="input-group" style="max-width: 150px;">
+                                    <button class="btn btn-outline-secondary" type="button" id="decrease-qty">-</button>
+                                    <input type="number" class="form-control text-center" id="quantity" value="1" min="1" max="10">
+                                    <button class="btn btn-outline-secondary" type="button" id="increase-qty">+</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <button class="btn btn-primary btn-lg w-100 add-to-cart-btn" 
+                                    data-product-id="{{ product.id }}" 
+                                    data-product-name="{{ product.name }}" 
+                                    data-product-price="{{ product.price }}"
+                                    data-product-image="{{ product.image_url or '' }}">
+                                <i class="fas fa-cart-plus me-2"></i>Add to Cart
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="additional-actions mt-3">
+                        <button class="btn btn-outline-danger me-2">
+                            <i class="fas fa-heart me-1"></i>Add to Wishlist
+                        </button>
+                        <button class="btn btn-outline-secondary">
+                            <i class="fas fa-share me-1"></i>Share
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Product Features -->
+                <div class="features-section mt-4">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <i class="fas fa-shipping-fast fa-2x text-primary mb-2"></i>
+                            <p class="small mb-0">Free Shipping</p>
+                        </div>
+                        <div class="col-4">
+                            <i class="fas fa-undo fa-2x text-primary mb-2"></i>
+                            <p class="small mb-0">30-Day Returns</p>
+                        </div>
+                        <div class="col-4">
+                            <i class="fas fa-shield-alt fa-2x text-primary mb-2"></i>
+                            <p class="small mb-0">Warranty</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Back to Products -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <a href="{{ url_for('products', category=product.category) }}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Back to {{ product.category }}
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const quantityInput = document.getElementById('quantity');
+    const increaseBtn = document.getElementById('increase-qty');
+    const decreaseBtn = document.getElementById('decrease-qty');
+    
+    increaseBtn.addEventListener('click', function() {
+        let currentValue = parseInt(quantityInput.value);
+        if (currentValue < 10) {
+            quantityInput.value = currentValue + 1;
+        }
+    });
+    
+    decreaseBtn.addEventListener('click', function() {
+        let currentValue = parseInt(quantityInput.value);
+        if (currentValue > 1) {
+            quantityInput.value = currentValue - 1;
+        }
+    });
+    
+    // Override add to cart to include quantity
+    document.querySelector('.add-to-cart-btn').addEventListener('click', function() {
+        const quantity = parseInt(quantityInput.value);
+        const productData = {
+            id: this.getAttribute('data-product-id'),
+            name: this.getAttribute('data-product-name'),
+            price: parseFloat(this.getAttribute('data-product-price')),
+            image: this.getAttribute('data-product-image'),
+            quantity: quantity
+        };
+        
+        addToCart(productData);
+    });
+});
+</script>
+{% endblock %}

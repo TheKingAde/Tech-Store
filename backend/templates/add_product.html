@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}Add Product - TECH STORE{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="display-6 fw-bold">
+                        <i class="fas fa-plus-circle me-3"></i>Add New Product
+                    </h1>
+                    <p class="lead">Add a new product to your TECH STORE inventory</p>
+                </div>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+            </div>
+            
+            <!-- Add Product Form -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-box me-2"></i>Product Details</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Product Name *</label>
+                                    <input type="text" class="form-control" id="name" name="name" required 
+                                           placeholder="Enter product name">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="price" class="form-label">Price *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="price" name="price" 
+                                               step="0.01" min="0" required placeholder="0.00">
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="category" class="form-label">Category *</label>
+                                    <select class="form-control" id="category" name="category" required>
+                                        <option value="">Select a category</option>
+                                        {% for cat in categories %}
+                                        <option value="{{ cat }}">{{ cat }}</option>
+                                        {% endfor %}
+                                        <option value="Laptops">Laptops</option>
+                                        <option value="Accessories">Accessories</option>
+                                        <option value="Monitors">Monitors</option>
+                                        <option value="Storage">Storage</option>
+                                        <option value="Gaming">Gaming</option>
+                                        <option value="Networking">Networking</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">Description *</label>
+                                    <textarea class="form-control" id="description" name="description" rows="4" 
+                                              required placeholder="Enter detailed product description"></textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="image" class="form-label">Product Image</label>
+                                    <div class="upload-area" id="upload-area">
+                                        <input type="file" class="form-control" id="image" name="image" 
+                                               accept="image/*" style="display: none;">
+                                        <div class="upload-placeholder text-center p-4" id="upload-placeholder">
+                                            <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                            <p class="mb-2">Click to upload image</p>
+                                            <small class="text-muted">PNG, JPG, JPEG, GIF up to 16MB</small>
+                                        </div>
+                                        <div class="image-preview" id="image-preview" style="display: none;">
+                                            <img id="preview-img" class="img-fluid rounded" alt="Preview">
+                                            <div class="mt-2">
+                                                <button type="button" class="btn btn-sm btn-outline-danger" id="remove-image">
+                                                    <i class="fas fa-trash me-1"></i>Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Product Preview Card -->
+                                <div class="card" id="product-preview" style="display: none;">
+                                    <div class="card-header">
+                                        <small class="text-muted">Preview</small>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="text-center">
+                                            <img id="preview-card-img" class="img-fluid mb-2 rounded" style="max-height: 100px;" alt="">
+                                            <h6 id="preview-name" class="card-title"></h6>
+                                            <p id="preview-price" class="text-primary fw-bold"></p>
+                                            <span id="preview-category" class="badge bg-secondary"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-plus me-2"></i>Add Product
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('upload-area');
+    const fileInput = document.getElementById('image');
+    const uploadPlaceholder = document.getElementById('upload-placeholder');
+    const imagePreview = document.getElementById('image-preview');
+    const previewImg = document.getElementById('preview-img');
+    const removeImageBtn = document.getElementById('remove-image');
+    const productPreview = document.getElementById('product-preview');
+    
+    // Form inputs for preview
+    const nameInput = document.getElementById('name');
+    const priceInput = document.getElementById('price');
+    const categoryInput = document.getElementById('category');
+    
+    // Preview elements
+    const previewName = document.getElementById('preview-name');
+    const previewPrice = document.getElementById('preview-price');
+    const previewCategory = document.getElementById('preview-category');
+    const previewCardImg = document.getElementById('preview-card-img');
+    
+    // Upload area click handler
+    uploadArea.addEventListener('click', function() {
+        fileInput.click();
+    });
+    
+    // File input change handler
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 16 * 1024 * 1024) {
+                alert('File size must be less than 16MB');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                previewCardImg.src = e.target.result;
+                uploadPlaceholder.style.display = 'none';
+                imagePreview.style.display = 'block';
+                updatePreview();
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Remove image handler
+    removeImageBtn.addEventListener('click', function() {
+        fileInput.value = '';
+        uploadPlaceholder.style.display = 'block';
+        imagePreview.style.display = 'none';
+        previewCardImg.src = '';
+        updatePreview();
+    });
+    
+    // Update preview as user types
+    nameInput.addEventListener('input', updatePreview);
+    priceInput.addEventListener('input', updatePreview);
+    categoryInput.addEventListener('change', updatePreview);
+    
+    function updatePreview() {
+        const name = nameInput.value || 'Product Name';
+        const price = priceInput.value ? '$' + parseFloat(priceInput.value).toFixed(2) : '$0.00';
+        const category = categoryInput.value || 'Category';
+        
+        previewName.textContent = name;
+        previewPrice.textContent = price;
+        previewCategory.textContent = category;
+        
+        // Show preview if any field is filled
+        if (nameInput.value || priceInput.value || categoryInput.value || fileInput.files.length > 0) {
+            productPreview.style.display = 'block';
+        } else {
+            productPreview.style.display = 'none';
+        }
+    }
+    
+    // Drag and drop functionality
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('border-primary');
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('border-primary');
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('border-primary');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            fileInput.dispatchEvent(new Event('change'));
+        }
+    });
+});
+</script>
+
+<style>
+.upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: border-color 0.15s ease-in-out;
+}
+
+.upload-area:hover {
+    border-color: #0d6efd;
+}
+
+.upload-placeholder {
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#image-preview img {
+    max-height: 150px;
+    width: 100%;
+    object-fit: cover;
+}
+</style>
+{% endblock %}
