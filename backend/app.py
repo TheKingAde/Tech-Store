@@ -2,7 +2,7 @@ import os
 import secrets
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash, send_from_directory
 from werkzeug.utils import secure_filename
-from models import db, Product, AdminUser
+from models import db, Product, AdminUser, Cart, CartItem, Order
 import json
 
 app = Flask(__name__)
@@ -206,13 +206,164 @@ def api_delete_product(product_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/checkout', methods=['POST'])
-def api_checkout():
+# Cart API endpoints
+def get_or_create_cart():
+    """Get or create a cart for the current session"""
+    cart_session_id = session.get('cart_session_id')
+    if not cart_session_id:
+        cart_session_id = secrets.token_hex(16)
+        session['cart_session_id'] = cart_session_id
+    
+    cart = Cart.query.filter_by(session_id=cart_session_id).first()
+    if not cart:
+        cart = Cart(session_id=cart_session_id)
+        db.session.add(cart)
+        db.session.commit()
+    
+    return cart
+
+@app.route('/api/cart', methods=['GET'])
+def api_get_cart():
+    """Get current cart with all items"""
+    try:
+        cart = get_or_create_cart()
+        return jsonify(cart.to_dict()), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/cart/add', methods=['POST'])
+def api_add_to_cart():
+    """Add an item to cart"""
     try:
         data = request.get_json()
-        # In a real app, you'd process payment here
-        # For now, just return success
-        return jsonify({'message': 'Order processed successfully', 'order_id': secrets.token_hex(8)}), 200
+        product_id = data.get('product_id')
+        quantity = data.get('quantity', 1)
+        
+        # Validate product exists
+        product = Product.query.get(product_id)
+        if not product:
+            return jsonify({'error': 'Product not found'}), 404
+        
+        cart = get_or_create_cart()
+        
+        # Check if item already exists in cart
+        existing_item = CartItem.query.filter_by(
+            cart_id=cart.id, 
+            product_id=product_id
+        ).first()
+        
+        if existing_item:
+            existing_item.quantity += quantity
+        else:
+            new_item = CartItem(
+                cart_id=cart.id,
+                product_id=product_id,
+                quantity=quantity
+            )
+            db.session.add(new_item)
+        
+        db.session.commit()
+        return jsonify(cart.to_dict()), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/cart/update', methods=['PUT'])
+def api_update_cart_item():
+    """Update quantity of an item in cart"""
+    try:
+        data = request.get_json()
+        item_id = data.get('item_id')
+        quantity = data.get('quantity')
+        
+        if quantity <= 0:
+            return jsonify({'error': 'Quantity must be greater than 0'}), 400
+        
+        cart = get_or_create_cart()
+        cart_item = CartItem.query.filter_by(
+            id=item_id, 
+            cart_id=cart.id
+        ).first()
+        
+        if not cart_item:
+            return jsonify({'error': 'Cart item not found'}), 404
+        
+        cart_item.quantity = quantity
+        db.session.commit()
+        
+        return jsonify(cart.to_dict()), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/cart/remove', methods=['DELETE'])
+def api_remove_from_cart():
+    """Remove an item from cart"""
+    try:
+        data = request.get_json()
+        item_id = data.get('item_id')
+        
+        cart = get_or_create_cart()
+        cart_item = CartItem.query.filter_by(
+            id=item_id, 
+            cart_id=cart.id
+        ).first()
+        
+        if not cart_item:
+            return jsonify({'error': 'Cart item not found'}), 404
+        
+        db.session.delete(cart_item)
+        db.session.commit()
+        
+        return jsonify(cart.to_dict()), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/cart/clear', methods=['DELETE'])
+def api_clear_cart():
+    """Clear all items from cart"""
+    try:
+        cart = get_or_create_cart()
+        CartItem.query.filter_by(cart_id=cart.id).delete()
+        db.session.commit()
+        
+        return jsonify({'message': 'Cart cleared successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/checkout', methods=['POST'])
+def api_checkout():
+    """Process checkout and create order"""
+    try:
+        data = request.get_json()
+        
+        # Get cart
+        cart = get_or_create_cart()
+        if not cart.items:
+            return jsonify({'error': 'Cart is empty'}), 400
+        
+        # Create order
+        order_number = f"ORD-{secrets.token_hex(6).upper()}"
+        order = Order(
+            order_number=order_number,
+            customer_email=data.get('email'),
+            customer_name=f"{data.get('firstName')} {data.get('lastName')}",
+            customer_phone=data.get('phone'),
+            shipping_address=f"{data.get('address')}, {data.get('city')}, {data.get('state')} {data.get('zip')}",
+            total_amount=cart.to_dict()['total'],
+            payment_method=data.get('paymentMethod', 'credit_card'),
+            status='confirmed'
+        )
+        
+        db.session.add(order)
+        
+        # Clear cart after successful order
+        CartItem.query.filter_by(cart_id=cart.id).delete()
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Order processed successfully',
+            'order': order.to_dict()
+        }), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
