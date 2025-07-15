@@ -154,19 +154,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Override add to cart to include quantity
-    document.querySelector('.add-to-cart-btn').addEventListener('click', function() {
-        const quantity = parseInt(quantityInput.value);
-        const productData = {
-            id: this.getAttribute('data-product-id'),
-            name: this.getAttribute('data-product-name'),
-            price: parseFloat(this.getAttribute('data-product-price')),
-            image: this.getAttribute('data-product-image'),
-            quantity: quantity
-        };
-        
-        addToCart(productData);
-    });
+    // The add to cart functionality is now handled by the main.js file
+    // which automatically detects and uses the quantity input when available
 });
 </script>
 {% endblock %}
