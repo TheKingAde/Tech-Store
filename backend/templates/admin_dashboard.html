@@ -147,6 +147,10 @@
                                                class="btn btn-sm btn-outline-primary" target="_blank">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+                                            <a href="{{ url_for('edit_product', product_id=product.id) }}" 
+                                               class="btn btn-sm btn-outline-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
                                             <button class="btn btn-sm btn-outline-danger delete-product-btn" 
                                                     data-product-id="{{ product.id }}" 
                                                     data-product-name="{{ product.name }}">

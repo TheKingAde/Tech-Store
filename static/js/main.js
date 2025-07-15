@@ -46,13 +46,16 @@ async function addToCart(productData) {
             updateCartCount();
             updateCartDisplay();
             showToast(`${productData.name} added to cart!`, 'success');
+            return Promise.resolve();
         } else {
             const error = await response.json();
             showToast(error.error || 'Error adding to cart', 'error');
+            return Promise.reject(new Error(error.error || 'Error adding to cart'));
         }
     } catch (error) {
         console.error('Error adding to cart:', error);
         showToast('Error adding to cart', 'error');
+        return Promise.reject(error);
     }
 }
 
@@ -346,40 +349,50 @@ function initializeAddToCartButtons() {
     const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
     
     addToCartButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            const productData = {
-                id: this.getAttribute('data-product-id'),
-                name: this.getAttribute('data-product-name'),
-                price: parseFloat(this.getAttribute('data-product-price')),
-                image: this.getAttribute('data-product-image'),
-                quantity: 1
-            };
-            
-            // Add loading state
-            const originalText = this.innerHTML;
-            this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Adding...';
-            this.disabled = true;
-            
-            // Simulate API call delay
-            setTimeout(() => {
-                addToCart(productData);
-                
-                // Reset button
-                this.innerHTML = originalText;
-                this.disabled = false;
-                
-                // Add success animation
-                this.classList.add('btn-success');
-                this.innerHTML = '<i class="fas fa-check me-1"></i>Added!';
-                
-                setTimeout(() => {
-                    this.classList.remove('btn-success');
-                    this.innerHTML = originalText;
-                }, 1500);
-            }, 500);
-        });
+        // Remove any existing event listeners
+        button.removeEventListener('click', handleAddToCart);
+        button.addEventListener('click', handleAddToCart);
+    });
+}
+
+function handleAddToCart(e) {
+    e.preventDefault();
+    
+    // Get quantity from input if on product detail page
+    const quantityInput = document.getElementById('quantity');
+    const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
+    
+    const productData = {
+        id: parseInt(this.getAttribute('data-product-id')),
+        name: this.getAttribute('data-product-name'),
+        price: parseFloat(this.getAttribute('data-product-price')),
+        image: this.getAttribute('data-product-image'),
+        quantity: quantity
+    };
+    
+    // Add loading state
+    const originalText = this.innerHTML;
+    this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Adding...';
+    this.disabled = true;
+    
+    // Call add to cart function
+    addToCart(productData).then(() => {
+        // Reset button
+        this.innerHTML = originalText;
+        this.disabled = false;
+        
+        // Add success animation
+        this.classList.add('btn-success');
+        this.innerHTML = '<i class="fas fa-check me-1"></i>Added!';
+        
+        setTimeout(() => {
+            this.classList.remove('btn-success');
+            this.innerHTML = originalText;
+        }, 1500);
+    }).catch(() => {
+        // Reset button on error
+        this.innerHTML = originalText;
+        this.disabled = false;
     });
 }
 
