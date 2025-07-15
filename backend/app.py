@@ -122,6 +122,18 @@ def add_product():
     categories = [cat[0] for cat in categories]
     return render_template('add_product.html', categories=categories)
 
+@app.route('/admin/edit-product/<int:product_id>', methods=['GET', 'POST'])
+@admin_required
+def edit_product(product_id):
+    product = Product.query.get_or_404(product_id)
+    
+    if request.method == 'POST':
+        return handle_product_update(product)
+    
+    categories = db.session.query(Product.category).distinct().all()
+    categories = [cat[0] for cat in categories]
+    return render_template('edit_product.html', product=product, categories=categories)
+
 def handle_product_creation():
     try:
         name = request.form['name']
@@ -158,6 +170,43 @@ def handle_product_creation():
         flash(f'Error adding product: {str(e)}', 'error')
         return redirect(url_for('add_product'))
 
+def handle_product_update(product):
+    try:
+        # Store old image for potential cleanup
+        old_image_url = product.image_url
+        
+        # Update product fields
+        product.name = request.form['name']
+        product.price = float(request.form['price'])
+        product.description = request.form['description']
+        product.category = request.form['category']
+        
+        # Handle image update
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename and allowed_file(file.filename):
+                # Delete old image if exists
+                if old_image_url:
+                    old_image_path = old_image_url.lstrip('/')
+                    if os.path.exists(old_image_path):
+                        os.remove(old_image_path)
+                
+                # Save new image
+                filename = secure_filename(file.filename)
+                import time
+                filename = f"{int(time.time())}_{filename}"
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                product.image_url = f"/uploads/{filename}"
+        
+        db.session.commit()
+        
+        flash('Product updated successfully!', 'success')
+        return redirect(url_for('admin_dashboard'))
+        
+    except Exception as e:
+        flash(f'Error updating product: {str(e)}', 'error')
+        return redirect(url_for('edit_product', product_id=product.id))
+
 # API Routes
 @app.route('/api/products')
 def api_products():
@@ -186,6 +235,29 @@ def api_search():
 @admin_required
 def api_create_product():
     return handle_product_creation()
+
+@app.route('/api/products/<int:product_id>', methods=['PUT'])
+@admin_required
+def api_update_product(product_id):
+    try:
+        product = Product.query.get_or_404(product_id)
+        data = request.get_json()
+        
+        # Update product fields
+        if 'name' in data:
+            product.name = data['name']
+        if 'price' in data:
+            product.price = float(data['price'])
+        if 'description' in data:
+            product.description = data['description']
+        if 'category' in data:
+            product.category = data['category']
+        
+        db.session.commit()
+        
+        return jsonify(product.to_dict()), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/products/<int:product_id>', methods=['DELETE'])
 @admin_required
