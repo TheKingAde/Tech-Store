@@ -5,7 +5,7 @@ from werkzeug.utils import secure_filename
 from models import db, Product, AdminUser, Cart, CartItem, Order
 import json
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../static', static_url_path='/static')
 app.config['SECRET_KEY'] = secrets.token_hex(16)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///techstore.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
